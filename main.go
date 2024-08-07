@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 type problem struct {
@@ -29,6 +30,7 @@ func main() {
 	if err != nil {
 		fmt.Println("error", err)
 	}
+	defer file.Close()
 
 	reader := csv.NewReader(file)
 	records, err1 := reader.ReadAll()
@@ -41,15 +43,26 @@ func main() {
 	correct := 0
 	inputReader := bufio.NewReader(os.Stdin)
 
-	for i, v := range parsedRecords {
-		fmt.Printf("Problem %v: %s ->", i+1, v.q)
-		ans, _ := inputReader.ReadString('\n')
-		ans = strings.TrimSpace(ans)
-		if ans == v.a {
-			correct++
-		}
-	}
+	ch := make(chan int)
 
-	fmt.Printf("You got %v of %v", correct, len(parsedRecords))
+	go func(ch chan int) {
+		for i, v := range parsedRecords {
+			fmt.Printf("Problem %v: %s ->", i+1, v.q)
+			ans, _ := inputReader.ReadString('\n')
+			ans = strings.TrimSpace(ans)
+			if ans == v.a {
+				correct++
+			}
+		}
+		ch <- 0
+	}(ch)
+
+	select {
+	case correct = <-ch:
+
+	case <-time.After(time.Second * 50): //wait for 50 second
+		fmt.Println("Time up's !")
+	}
+	fmt.Printf("\nYou got %v of %v", correct, len(parsedRecords))
 
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -26,7 +27,12 @@ func parseRecords(records [][]string) []problem {
 }
 
 func main() {
-	file, err := os.Open("problem.csv")
+	fileName := flag.String("f", "problem.csv", "provide csv file name")
+	var quizTime int
+	flag.IntVar(&quizTime, "t", 50, "provide time in seconds")
+	flag.Parse()
+
+	file, err := os.Open(*fileName)
 	if err != nil {
 		fmt.Println("error", err)
 	}
@@ -60,7 +66,7 @@ func main() {
 	select {
 	case correct = <-ch:
 
-	case <-time.After(time.Second * 50): //wait for 50 second
+	case <-time.After(time.Duration(quizTime * int(time.Second))): //wait for 50 second
 		fmt.Println("Time up's !")
 	}
 	fmt.Printf("\nYou got %v of %v", correct, len(parsedRecords))
